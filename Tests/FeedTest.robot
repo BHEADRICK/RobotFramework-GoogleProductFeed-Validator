@@ -86,7 +86,7 @@ GTIN is valid
     [Arguments]  ${gtin}
     ${len}=     get length  ${gtin}
     run keyword if  ${len} < 12 and ${len} > 14 and ${len} != 0    Fail  GTIN ${gtin} must be 12 digits
-    ${type}=    Evaluate     type($variable).__name__
+    ${type}=    Evaluate     type(${gtin}).__name__
     run keyword if   ${type} != 'int'  Fail  GTIN must be only digits
 
 MPN is valid
