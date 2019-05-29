@@ -72,25 +72,30 @@ Product Has Basic Fields
 
 Product Has Conditionally Required Fields
     [Arguments]  ${prod}
-#    ${gtin}
-#    ${mpn}
-#    Run Keyword And Ignore Error
-    ${gtin}=    Get From Dictionary  ${prod}  gtin
-#    Run Keyword And Ignore Error
+    ${gtin}=    set variable  ${EMPTY}
+    ${gtinstatus}    Run Keyword And Ignore Error   Get From Dictionary  ${prod}  gtin
+    ${glen}=    get length  ${gtinstatus}
+    ${gtin}=    set variable If  ${glen} == 2 and '${gtinstatus[0]}'=='PASS'   ${gtinstatus[1]}
     ${mpn}=    Get From Dictionary  ${prod}  mpn
-    ${glen}=    get length  ${gtin}
+    ${glen}=   set variable  0
+    ${glen}=    run keyword If  ${glen} == 2 and '${gtinstatus[0]}'=='PASS'   get length  ${gtin}
     ${mlen}=    get length  ${mpn}
-    Run Keyword If  ${glen} > 0     GTIN is valid  ${gtin}      ELSE IF     ${mlen} > 0  MPN is valid  ${mpn}   ELSE    Fail  GTIN or MPN is required
+    Run Keyword If  ${glen} > 10     GTIN is valid  ${gtin}  ${mpn}      ELSE IF     ${mlen} > 0  MPN is valid  ${mpn}   ELSE    Fail  GTIN or MPN is required
 
+# Must be 12-14 digits
+# Must only be numeric
 GTIN is valid
-    [Arguments]  ${gtin}
+    [Arguments]  ${gtin}  ${mpn}
     ${len}=     get length  ${gtin}
     run keyword if  ${len} < 12 and ${len} > 14 and ${len} != 0    Fail  GTIN ${gtin} must be 12 digits
-    ${type}=    Evaluate     type(${gtin}).__name__
-    run keyword if   ${type} != 'int'  Fail  GTIN must be only digits
+    should match regexp     ${gtin}  	^\\d{12,14}    GTIN must be only 12-14 digits
+    MPN is valid  ${mpn}
 
+
+# Max 70 alphanumeric characters
+#
 MPN is valid
     [Arguments]  ${mpn}
-    ${len}=     get length  ${mpn}
+    ${mpn} =    get alpha  ${mpn}
+    ${len} =     get length  ${mpn}
     run keyword if  ${len} > 70     Fail  MPN cannot exceed 70 characters
-    should match regexp     ${mpn}  [A-Za-z0-9]*

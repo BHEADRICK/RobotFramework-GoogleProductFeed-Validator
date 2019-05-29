@@ -1,7 +1,7 @@
 
 import requests
 import urllib2
-
+import re
 
 
 import xml.etree.ElementTree as ET
@@ -49,6 +49,9 @@ def parse_xml(path):
         # return product items list
 
     return items
+def get_alpha(val):
+    return re.sub('[^0-9a-zA-Z]+','', val)
+
 
 # def get_field(item, field):
 
