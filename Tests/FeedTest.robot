@@ -39,9 +39,9 @@ Feed is valid
     ${outputName} =   get filename from url  ${url}
 
       ${outputDir} =    Set Variable    ${EMPTY}
-     ${rc}    ${output}    Run And Return Rc And Output    wget -O ${outputName} ${url}
-
-     Move File    ${outputName}    /tmp/
+#     ${rc}    ${output}    Run And Return Rc And Output    wget -O ${outputName} ${url}
+    get feed  ${url}  ${outputName}
+#     Move File    ${outputName}    /tmp/
 #     ${xml}=  Parse XML  /tmp/${outputName}
      @{prods} =  parse xml    /tmp/${outputName}
      ${len} =  get length    ${prods}
