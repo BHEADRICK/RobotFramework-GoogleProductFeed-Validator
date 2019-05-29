@@ -8,16 +8,38 @@ Library  ../Libs/Helper.py
 
 
 *** Variables ***
-${URL}
+${URLS}
 
 *** Test Cases ***
-Feed is valid
+Feeds are valid
+    @{url_list} =    Split String  ${URLS}  ,
 
+    FOR  ${url}  IN  @{url_list}
+        Feed is valid  ${url}
+
+    END
+#ensure required fields have vales
+
+
+#id, title (max 150char), description (max 5k chars), link, image, availability, price, brand, condition
+
+#Product fields have correct units
+#ensure values with units have properly formatted units
+
+#Product gtin is valid
+
+
+#Product Description has proper encoding
+
+*** Keywords ***
+
+Feed is valid
+    [Arguments]  ${url}
 #    ${URL}=  Set Variable       https://www.poolwarehouse.com/wp-content/uploads/cart_product_feeds/Google/beefeater.xml
-    ${outputName} =   get filename from url  ${URL}
+    ${outputName} =   get filename from url  ${url}
 
       ${outputDir} =    Set Variable    ${EMPTY}
-     ${rc}    ${output}    Run And Return Rc And Output    wget -O ${outputName} ${URL}
+     ${rc}    ${output}    Run And Return Rc And Output    wget -O ${outputName} ${url}
 
      Move File    ${outputName}    /tmp/
 #     ${xml}=  Parse XML  /tmp/${outputName}
@@ -35,20 +57,6 @@ Feed is valid
 #        LOG  ${item}  console=True
      END
 
-#ensure required fields have vales
-
-
-#id, title (max 150char), description (max 5k chars), link, image, availability, price, brand, condition
-
-#Product fields have correct units
-#ensure values with units have properly formatted units
-
-#Product gtin is valid
-
-
-#Product Description has proper encoding
-
-*** Keywords ***
 get filename from url
     [Arguments]  ${url}
     ${parts}=  Split String  ${url}     /
