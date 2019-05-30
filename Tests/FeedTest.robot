@@ -51,7 +51,7 @@ Feed is valid
         ${link}=   get from dictionary  ${product}  link
         ${id}=       Get From Dictionary    ${product}  id
         LOG     evaluating product ${link} (${id})
-        LOG     ${product}
+#        LOG     ${product}
         Product Has Basic Fields  ${product}
         Product Has Conditionally Required Fields  ${product}
 #        LOG  ${item}  console=True
