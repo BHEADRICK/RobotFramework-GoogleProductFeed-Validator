@@ -11,11 +11,11 @@ Library  ../Libs/Helper.py
 ${URLS}
 
 *** Test Cases ***
-Feeds are valid
+Feeds should be valid
     @{url_list} =    Split String  ${URLS}  ,
 
     FOR  ${url}  IN  @{url_list}
-        Feed is valid  ${url}
+        Feed should be valid  ${url}
 
     END
 #ensure required fields have vales
@@ -26,14 +26,14 @@ Feeds are valid
 #Product fields have correct units
 #ensure values with units have properly formatted units
 
-#Product gtin is valid
+#Product gtin should bevalid
 
 
 #Product Description has proper encoding
 
 *** Keywords ***
 
-Feed is valid
+Feed should be valid
     [Arguments]  ${url}
 #    ${URL}=  Set Variable       https://www.poolwarehouse.com/wp-content/uploads/cart_product_feeds/Google/beefeater.xml
 
@@ -46,11 +46,11 @@ Feed is valid
 #     Log  ${len} items   console=True
 
      FOR    ${product}  IN   @{prods}
-        product is valid  ${product}
+        product should be valid  ${product}
 #        LOG  ${item}  console=True
      END
 
-Product is valid
+Product should be valid
     [Arguments]  ${product}
     ${link}=   get from dictionary  ${product}  link
     ${id}=       Get From Dictionary    ${product}  id
@@ -80,32 +80,58 @@ Product Has Basic Fields
     ${brand}=    Get From Dictionary    ${prod}  brand
 
 
+    unit values should be valid   ${prod}
+
+
+
 Product Has Conditionally Required Fields
     [Arguments]  ${prod}
     ${gtin}=    set variable  ${EMPTY}
     ${gtinstatus}    Run Keyword And Ignore Error   Get From Dictionary  ${prod}  gtin
-    ${glen}=    get length  ${gtinstatus}
-    ${gtin}=    set variable If  ${glen} == 2 and '${gtinstatus[0]}'=='PASS'   ${gtinstatus[1]}
-    ${mpn}=    Get From Dictionary  ${prod}  mpn
+
+    ${gtin}=    set variable If  '${gtinstatus[0]}'=='PASS'  ${gtinstatus[1]}
+
+    ${mpnstat}    Run Keyword And Ignore Error    Get From Dictionary  ${prod}  mpn
+    ${mpn}=    set variable If   '${mpnstat[0]}'=='PASS'    ${mpnstat[1]}
+    ${mlen}=   set variable  0
     ${glen}=   set variable  0
-    ${glen}=    run keyword If  ${glen} == 2 and '${gtinstatus[0]}'=='PASS'   get length  ${gtin}
-    ${mlen}=    get length  ${mpn}
-    Run Keyword If  ${glen} > 10     GTIN is valid  ${gtin}  ${mpn}      ELSE IF     ${mlen} > 0  MPN is valid  ${mpn}   ELSE    Fail  GTIN or MPN is required
+    ${mlen}=    run keyword if  '${mpnstat[0]}'=='PASS'     get length  ${mpnstat[1]}
+    ${glen}=    run keyword If  '${gtinstatus[0]}'=='PASS'   get length  ${gtinstatus[1]}
+
+    Run Keyword If  ${glen} > 10     GTIN should be valid  ${gtin}  ${mpn}      ELSE IF     ${mlen} > 0  MPN should be valid  ${mpn}   ELSE    Fail  GTIN or MPN is required
 
 # Must be 12-14 digits
 # Must only be numeric
-GTIN is valid
+GTIN should be valid
     [Arguments]  ${gtin}  ${mpn}
+    ${gtin}=     Evaluate  '${gtin}'.strip()
     ${len}=     get length  ${gtin}
     run keyword if  ${len} < 12 and ${len} > 14 and ${len} != 0    Fail  GTIN ${gtin} must be 12 digits
     should match regexp     ${gtin}  	^\\d{12,14}    GTIN must be only 12-14 digits
-    MPN is valid  ${mpn}
+    MPN should be valid  ${mpn}
 
 
 # Max 70 alphanumeric characters
 #
-MPN is valid
+MPN should be valid
     [Arguments]  ${mpn}
     ${mpn} =    get alpha  ${mpn}
     ${len} =     get length  ${mpn}
     run keyword if  ${len} > 70     Fail  MPN cannot exceed 70 characters
+
+
+unit values should be valid
+    [Arguments]   ${prod}
+     ${weight}    Run Keyword And Ignore Error    Get From Dictionary    ${prod}  shipping_weight
+    ${width}    Run Keyword And Ignore Error  Get From Dictionary    ${prod}  shipping_width
+    ${length}     Run Keyword And Ignore Error    Get From Dictionary    ${prod}  shipping_length
+    ${height}    Run Keyword And Ignore Error    Get From Dictionary    ${prod}  shipping_height
+    ${price}=   Get From Dictionary    ${prod}  price
+
+    ${pat}=   set Variable  [\\d.]* [a-z]*
+    should match regexp     ${price}    ${pat}
+
+    run keyword if  '${weight[0]}'=='PASS'  should match regexp     ${weight[1]}    ${pat}
+    run keyword if  '${width[0]}'=='PASS'  should match regexp     ${width[1]}    ${pat}
+    run keyword if  '${length[0]}'=='PASS'  should match regexp     ${length[1]}    ${pat}
+    run keyword if  '${height[0]}'=='PASS'  should match regexp     ${height[1]}    ${pat}
