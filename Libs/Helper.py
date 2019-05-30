@@ -6,12 +6,12 @@ import re
 
 import xml.etree.ElementTree as ET
 
-def get_feed(url, filename):
+def get_feed(url):
     filedata = urllib2.urlopen(url)
     datatowrite = filedata.read()
-    with open('/tmp/' + filename, 'wb') as f:
+    with open('/tmp/temp.xml', 'wb') as f:
         f.write(datatowrite)
-    return '/tmp/' + filename
+    return parse_xml('/tmp/temp.xml')
 
 def parse_xml(path):
 

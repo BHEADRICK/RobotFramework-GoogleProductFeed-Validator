@@ -36,26 +36,28 @@ Feeds are valid
 Feed is valid
     [Arguments]  ${url}
 #    ${URL}=  Set Variable       https://www.poolwarehouse.com/wp-content/uploads/cart_product_feeds/Google/beefeater.xml
-    ${outputName} =   get filename from url  ${url}
 
-      ${outputDir} =    Set Variable    ${EMPTY}
 #     ${rc}    ${output}    Run And Return Rc And Output    wget -O ${outputName} ${url}
-    get feed  ${url}  ${outputName}
+    @{prods} =  get feed  ${url}
 #     Move File    ${outputName}    /tmp/
 #     ${xml}=  Parse XML  /tmp/${outputName}
-     @{prods} =  parse xml    /tmp/${outputName}
-     ${len} =  get length    ${prods}
-     Log  ${len} items   console=True
+#     @{prods} =  parse xml    /tmp/${outputName}
+#     ${len} =  get length    ${prods}
+#     Log  ${len} items   console=True
 
      FOR    ${product}  IN   @{prods}
-        ${link}=   get from dictionary  ${product}  link
-        ${id}=       Get From Dictionary    ${product}  id
-        LOG     evaluating product ${link} (${id})
-#        LOG     ${product}
-        Product Has Basic Fields  ${product}
-        Product Has Conditionally Required Fields  ${product}
+        product is valid  ${product}
 #        LOG  ${item}  console=True
      END
+
+Product is valid
+    [Arguments]  ${product}
+    ${link}=   get from dictionary  ${product}  link
+    ${id}=       Get From Dictionary    ${product}  id
+    LOG     evaluating product ${link} (${id})
+    #        LOG     ${product}
+    Product Has Basic Fields  ${product}
+    Product Has Conditionally Required Fields  ${product}
 
 get filename from url
     [Arguments]  ${url}
