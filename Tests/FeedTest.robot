@@ -77,7 +77,7 @@ Product Has Basic Fields
     ${brand}=    get field    ${prod}  brand  ${feed}
 
 
-    unit values should be valid   ${prod}
+    unit values should be valid   ${prod}  ${feed}
 
 Get Field
     [Arguments]  ${prod}  ${field}  ${feed}
@@ -132,7 +132,11 @@ MPN should be valid
 
 
 unit values should be valid
-    [Arguments]   ${prod}
+    [Arguments]   ${prod}  ${feed}
+
+       ${link}=   get from dictionary  ${prod}  link
+    ${id}=       Get From Dictionary    ${prod}  id
+     ${suffix}=  set variable  for ${link} (${id}) in feed ${feed}
      ${weight}    Run Keyword And Ignore Error    Get From Dictionary    ${prod}  shipping_weight
     ${width}    Run Keyword And Ignore Error  Get From Dictionary    ${prod}  shipping_width
     ${length}     Run Keyword And Ignore Error    Get From Dictionary    ${prod}  shipping_length
@@ -142,8 +146,8 @@ unit values should be valid
     ${pat}=   set Variable  [\\d.]* [a-z]*
     should match regexp     ${price}    ${pat}
 
-    run keyword if  '${weight[0]}'=='PASS'  should match regexp     ${weight[1]}    ${pat}
-    run keyword if  '${width[0]}'=='PASS'  should match regexp     ${width[1]}    ${pat}
-    run keyword if  '${length[0]}'=='PASS'  should match regexp     ${length[1]}    ${pat}
-    run keyword if  '${height[0]}'=='PASS'  should match regexp     ${height[1]}    ${pat}
-    run keyword if  ${price} == '$0.00'  Fail
+    run keyword if  '${weight[0]}'=='PASS'  should match regexp     ${weight[1]}    ${pat}  weight not valid ${suffix}
+    run keyword if  '${width[0]}'=='PASS'  should match regexp     ${width[1]}    ${pat}  width not valid ${suffix}
+    run keyword if  '${length[0]}'=='PASS'  should match regexp     ${length[1]}    ${pat}  length not valid ${suffix}
+    run keyword if  '${height[0]}'=='PASS'  should match regexp     ${height[1]}    ${pat}  height not valid ${suffix}
+    run keyword if  '${price}' == '$0.00'  Fail  Price cannot be $0 ${suffix}
