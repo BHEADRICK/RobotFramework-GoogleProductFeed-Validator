@@ -46,18 +46,16 @@ Feed should be valid
 #     Log  ${len} items   console=True
 
      FOR    ${product}  IN   @{prods}
-        product should be valid  ${product}
+        product should be valid  ${product}  ${url}
 #        LOG  ${item}  console=True
      END
 
 Product should be valid
-    [Arguments]  ${product}
-    ${link}=   get from dictionary  ${product}  link
-    ${id}=       Get From Dictionary    ${product}  id
-    LOG     evaluating product ${link} (${id})
+    [Arguments]  ${product}  ${feed}
+
     #        LOG     ${product}
-    Product Has Basic Fields  ${product}
-    Product Has Conditionally Required Fields  ${product}
+    Product Has Basic Fields  ${product}  ${feed}
+    Product Has Conditionally Required Fields  ${product}  ${feed}
 
 get filename from url
     [Arguments]  ${url}
@@ -68,24 +66,36 @@ get filename from url
     [return]  ${end}
 
 Product Has Basic Fields
-    [Arguments]  ${prod}
+    [Arguments]  ${prod}  ${feed}
 
-    ${id}=       Get From Dictionary    ${prod}  id
-    ${title}=    Get From Dictionary    ${prod}  title
-    ${desc}=     Get From Dictionary    ${prod}  description
-    ${img}=      Get From Dictionary    ${prod}  image_link
-    ${avail}=    Get From Dictionary    ${prod}  availability
-    ${cond}=     Get From Dictionary    ${prod}  condition
-    ${price}=    Get From Dictionary    ${prod}  price
-    ${brand}=    Get From Dictionary    ${prod}  brand
+   ${title}=    get field    ${prod}  title  ${feed}
+    ${desc}=     get field    ${prod}  description  ${feed}
+    ${img}=      get field    ${prod}  image_link  ${feed}
+    ${avail}=    get field    ${prod}  availability  ${feed}
+    ${cond}=     get field    ${prod}  condition  ${feed}
+    ${price}=    get field    ${prod}  price  ${feed}
+    ${brand}=    get field    ${prod}  brand  ${feed}
 
 
     unit values should be valid   ${prod}
 
+Get Field
+    [Arguments]  ${prod}  ${field}  ${feed}
+
+     ${link}=   get from dictionary  ${prod}  link
+    ${id}=       Get From Dictionary    ${prod}  id
+
+    ${status}       Run Keyword and Ignore Error    get from dictionary  ${prod}  ${field}
+    ${msg}=  set variable   ${field} is missing from ${link} (${id}) in feed ${feed}
+    Return from keyword if  '${status[0]}'=='PASS'  ${status[1]}  ELSE  Fail  ${msg}
 
 
 Product Has Conditionally Required Fields
-    [Arguments]  ${prod}
+    [Arguments]  ${prod}  ${feed}
+
+      ${link}=   get from dictionary  ${prod}  link
+    ${id}=       Get From Dictionary    ${prod}  id
+    ${suffix}=  set variable  for ${link} (${id}) in feed ${feed}
     ${gtin}=    set variable  ${EMPTY}
     ${gtinstatus}    Run Keyword And Ignore Error   Get From Dictionary  ${prod}  gtin
 
@@ -98,26 +108,27 @@ Product Has Conditionally Required Fields
     ${mlen}=    run keyword if  '${mpnstat[0]}'=='PASS'     get length  ${mpnstat[1]}
     ${glen}=    run keyword If  '${gtinstatus[0]}'=='PASS'   get length  ${gtinstatus[1]}
 
-    Run Keyword If  ${glen} > 10     GTIN should be valid  ${gtin}  ${mpn}      ELSE IF     ${mlen} > 0  MPN should be valid  ${mpn}   ELSE    Fail  GTIN or MPN is required
+    ${msg}=  set variable  GTIN or MPN is required ${suffix}
+    Run Keyword If  ${glen} > 10     GTIN should be valid  ${gtin}  ${mpn}  ${suffix}      ELSE IF     ${mlen} > 0  MPN should be valid  ${mpn}  ${suffix}   ELSE    Fail  ${msg}
 
 # Must be 12-14 digits
 # Must only be numeric
 GTIN should be valid
-    [Arguments]  ${gtin}  ${mpn}
+    [Arguments]  ${gtin}  ${mpn}  ${suffix}
     ${gtin}=     Evaluate  '${gtin}'.strip()
     ${len}=     get length  ${gtin}
-    run keyword if  ${len} < 12 and ${len} > 14 and ${len} != 0    Fail  GTIN ${gtin} must be 12 digits
-    should match regexp     ${gtin}  	^\\d{12,14}    GTIN must be only 12-14 digits
-    MPN should be valid  ${mpn}
+    run keyword if  ${len} < 12 and ${len} > 14 and ${len} != 0    Fail  GTIN ${gtin} must be 12 digits ${suffix}
+    should match regexp     ${gtin}  	^\\d{12,14}    GTIN must be only 12-14 digits ${suffix}
+    MPN should be valid  ${mpn}  ${suffix}
 
 
 # Max 70 alphanumeric characters
 #
 MPN should be valid
-    [Arguments]  ${mpn}
+    [Arguments]  ${mpn}  ${suffix}
     ${mpn} =    get alpha  ${mpn}
     ${len} =     get length  ${mpn}
-    run keyword if  ${len} > 70     Fail  MPN cannot exceed 70 characters
+    run keyword if  ${len} > 70     Fail  MPN cannot exceed 70 characters ${suffix}
 
 
 unit values should be valid
@@ -135,3 +146,4 @@ unit values should be valid
     run keyword if  '${width[0]}'=='PASS'  should match regexp     ${width[1]}    ${pat}
     run keyword if  '${length[0]}'=='PASS'  should match regexp     ${length[1]}    ${pat}
     run keyword if  '${height[0]}'=='PASS'  should match regexp     ${height[1]}    ${pat}
+    run keyword if  ${price} == '$0.00'  Fail
