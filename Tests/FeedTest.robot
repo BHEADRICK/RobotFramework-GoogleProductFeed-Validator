@@ -9,6 +9,7 @@ Library  ../Libs/Helper.py
 
 *** Variables ***
 ${URLS}
+${SUCCESS}=    True
 
 *** Test Cases ***
 Feeds should be valid
@@ -19,6 +20,7 @@ Feeds should be valid
 
     END
 #ensure required fields have vales
+    Should Be Equal  ${SUCCESS}  True
 
 
 #id, title (max 150char), description (max 5k chars), link, image, availability, price, brand, condition
@@ -49,6 +51,8 @@ Feed should be valid
         product should be valid  ${product}  ${url}
 #        LOG  ${item}  console=True
      END
+
+
 
 Product should be valid
     [Arguments]  ${product}  ${feed}
@@ -87,7 +91,7 @@ Get Field
 
     ${status}       Run Keyword and Ignore Error    get from dictionary  ${prod}  ${field}
     ${msg}=  set variable   ${field} is missing from ${link} (${id}) in feed ${feed}
-    Return from keyword if  '${status[0]}'=='PASS'  ${status[1]}  ELSE  Fail  ${msg}
+    Return from keyword if  '${status[0]}'=='PASS'  ${status[1]}  ELSE  FailMsg  ${msg}
 
 
 Product Has Conditionally Required Fields
@@ -109,7 +113,7 @@ Product Has Conditionally Required Fields
     ${glen}=    run keyword If  '${gtinstatus[0]}'=='PASS'   get length  ${gtinstatus[1]}
 
     ${msg}=  set variable  GTIN or MPN is required ${suffix}
-    Run Keyword If  ${glen} > 10     GTIN should be valid  ${gtin}  ${mpn}  ${suffix}      ELSE IF     ${mlen} > 0  MPN should be valid  ${mpn}  ${suffix}   ELSE    Fail  ${msg}
+    Run Keyword If  ${glen} > 10     GTIN should be valid  ${gtin}  ${mpn}  ${suffix}      ELSE IF     ${mlen} > 0  MPN should be valid  ${mpn}  ${suffix}   ELSE    FailMsg  ${msg}
 
 # Must be 12-14 digits
 # Must only be numeric
@@ -117,13 +121,20 @@ GTIN should be valid
     [Arguments]  ${gtin}  ${mpn}  ${suffix}
     ${gtin}=     Evaluate  '${gtin}'.strip()
     ${len}=     get length  ${gtin}
-    run keyword if  ${len} < 12 and ${len} > 14 and ${len} != 0    Fail  GTIN ${gtin} must be 12 digits ${suffix}
+    run keyword if  ${len} < 12 and ${len} > 14 and ${len} != 0    FailMsg  GTIN ${gtin} must be 12 digits ${suffix}
 
-    should match regexp     ${gtin}  	^\\d{12,14}$    GTIN must be only 12-14 digits ${suffix}
-    ${gtinvalid}=  validate gtin  ${gtin}
-    run keyword if  ${gtinvalid} == 'False'    Fail  GTIN ${gtin} is not valid ${suffix}
+#    LOG  ${gtin}  console=True
+    ${gtinformat}=  check gtin format  ${gtin}
+    run keyword if  '${gtinformat}' != ''     FailMsg  ${gtinformat} ${suffix}
+
     MPN should be valid  ${mpn}  ${suffix}
 
+
+FailMsg
+    [Arguments]  ${msg}
+    
+    LOG  ${msg}  console=True
+    Set Global Variable  ${SUCCESS}     False
 
 # Max 70 alphanumeric characters
 #
@@ -131,7 +142,7 @@ MPN should be valid
     [Arguments]  ${mpn}  ${suffix}
     ${mpn} =    get alpha  ${mpn}
     ${len} =     get length  ${mpn}
-    run keyword if  ${len} > 70     Fail  MPN cannot exceed 70 characters ${suffix}
+    run keyword if  ${len} > 70     FailMsg  MPN cannot exceed 70 characters ${suffix}
 
 
 unit values should be valid
@@ -153,4 +164,4 @@ unit values should be valid
     run keyword if  '${width[0]}'=='PASS'  should match regexp     ${width[1]}    ${pat}  width not valid ${suffix}
     run keyword if  '${length[0]}'=='PASS'  should match regexp     ${length[1]}    ${pat}  length not valid ${suffix}
     run keyword if  '${height[0]}'=='PASS'  should match regexp     ${height[1]}    ${pat}  height not valid ${suffix}
-    run keyword if  '${price}' == '$0.00'  Fail  Price cannot be $0 ${suffix}
+    run keyword if  '${price}' == '$0.00'  FailMsg  Price cannot be $0 ${suffix}

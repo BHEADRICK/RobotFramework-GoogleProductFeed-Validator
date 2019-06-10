@@ -53,37 +53,83 @@ def parse_xml(path):
 def get_alpha(val):
     return re.sub('[^0-9a-zA-Z]+','', val)
 
+def check_gtin_format(upc):
+    upc = str(upc)
+    p = re.compile('^\\d{12,14}$')
+    m = p.match(upc)
+
+    if m:
+
+        valid = validate_gtin(upc)
+
+        if valid:
+            return ''
+        else:
+            return  'GTIN ' + upc + ' not valid (checksum error)'
+    else:
+        return 'GTIN (' + upc + ') must be only 12-14 digits'
 
 def validate_gtin(upc):
     # print upc
-    upc = str(upc)
-    sum = 0
+    upc = str(upc).strip()
     checkdig = upc[len(upc)-1]
+    upca = upc[0:len(upc)-1]
+    # print upc
+    # print upca
+    # print checkdig
 
-    upc = (upc[:-1]).strip()
-    # sum of odd positions
-    for i in xrange(0,len(upc)-1, 2):
-        if upc[i] != '':
-            sum += int(upc[i])
-    # multiply by 3
-    sum *= 3
 
-    sum2 = 0
-    # sum of even positions (except last digit)
-    for j in xrange(1,len(upc),2):
-        if upc[j] != '':
-            sum += int(upc[j])
-    # subtract from next multiple of 10
-    nextmult = int(math.ceil(sum / 10.0)) * 10
-    ans = nextmult - sum
-    return ans == int(checkdig)
+    if upc == '' or len(upc) < 12:
+        return False
+
+    return upc == get_check_digit(upca)
+
+
+
     # result should be last digit (check digit)
+def get_check_digit(upc_str):
+    """
+    Returns a 12 digit upc-a string from an 11-digit upc-a string by adding
+    a check digit
+    >>> add_check_digit('02345600007')
+    '023456000073'
+    >>> add_check_digit('21234567899')
+    '212345678992'
+    >>> add_check_digit('04210000526')
+    '042100005264'
+    """
+
+    upc_str = str(upc_str)
+    # if len(upc_str) != 11:
+    #     # raise Exception("Invalid length " + upc_str)
+    #     return upc_str
+
+    odd_sum = 0
+    even_sum = 0
+    for i, char in enumerate(upc_str):
+        j = i+1
+        if j % 2 == 0:
+            even_sum += int(char)
+        else:
+            odd_sum += int(char)
+
+    if len(upc_str) % 2 == 0:
+        total_sum = (even_sum * 3) + odd_sum
+    else:
+        total_sum = (odd_sum * 3) + even_sum
+
+    mod = total_sum % 10
+    check_digit = 10 - mod
+    if check_digit == 10:
+        check_digit = 0
+
+    # print check_digit
+    return upc_str + str(check_digit)
 
 
+# print get_check_digit('68914561091')
 
-
-
-# print validate_upc('638983000091')
+print check_gtin_format('788379665999 & 788379674359')
 
 # def get_field(item, field):
 
