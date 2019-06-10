@@ -118,7 +118,10 @@ GTIN should be valid
     ${gtin}=     Evaluate  '${gtin}'.strip()
     ${len}=     get length  ${gtin}
     run keyword if  ${len} < 12 and ${len} > 14 and ${len} != 0    Fail  GTIN ${gtin} must be 12 digits ${suffix}
-    should match regexp     ${gtin}  	^\\d{12,14}    GTIN must be only 12-14 digits ${suffix}
+
+    should match regexp     ${gtin}  	^\\d{12,14}$    GTIN must be only 12-14 digits ${suffix}
+    ${gtinvalid}=  validate gtin  ${gtin}
+    run keyword if  ${gtinvalid} == 'False'    Fail  GTIN ${gtin} is not valid ${suffix}
     MPN should be valid  ${mpn}  ${suffix}
 
 

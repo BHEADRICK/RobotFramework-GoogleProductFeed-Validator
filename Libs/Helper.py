@@ -1,10 +1,8 @@
-
-
 import urllib2
 import re
-
-
+import math
 import xml.etree.ElementTree as ET
+
 
 def get_feed(url):
     filedata = urllib2.urlopen(url)
@@ -12,6 +10,7 @@ def get_feed(url):
     with open('/tmp/temp.xml', 'wb') as f:
         f.write(datatowrite)
     return parse_xml('/tmp/temp.xml')
+
 
 def parse_xml(path):
 
@@ -49,9 +48,42 @@ def parse_xml(path):
         # return product items list
 
     return items
+
+
 def get_alpha(val):
     return re.sub('[^0-9a-zA-Z]+','', val)
 
+
+def validate_gtin(upc):
+    # print upc
+    upc = str(upc)
+    sum = 0
+    checkdig = upc[len(upc)-1]
+
+    upc = (upc[:-1]).strip()
+    # sum of odd positions
+    for i in xrange(0,len(upc)-1, 2):
+        if upc[i] != '':
+            sum += int(upc[i])
+    # multiply by 3
+    sum *= 3
+
+    sum2 = 0
+    # sum of even positions (except last digit)
+    for j in xrange(1,len(upc),2):
+        if upc[j] != '':
+            sum += int(upc[j])
+    # subtract from next multiple of 10
+    nextmult = int(math.ceil(sum / 10.0)) * 10
+    ans = nextmult - sum
+    return ans == int(checkdig)
+    # result should be last digit (check digit)
+
+
+
+
+
+# print validate_upc('638983000091')
 
 # def get_field(item, field):
 
