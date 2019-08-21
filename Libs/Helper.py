@@ -5,6 +5,20 @@ import xml.etree.ElementTree as ET
 
 
 def get_feed(url):
+
+    if(url.find('@')>-1):
+        matchObj = re.match(r'(.*)//(.*):(.*)@(.*)', url)
+        url = matchObj.group(1) + '//' + matchObj.group(4)
+        user = matchObj.group(2)
+        pw = matchObj.group(3)
+        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        passman.add_password(None, url,user, pw)
+        auth_handler = urllib2.HTTPBasicAuthHandler(passman)
+        opener = urllib2.build_opener(auth_handler)
+        urllib2.install_opener(opener)
+    # urllib2.urlopen("http://casfcddb.xxx.com")
+
+
     filedata = urllib2.urlopen(url)
     datatowrite = filedata.read()
     with open('/tmp/temp.xml', 'wb') as f:
